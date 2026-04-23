@@ -4,66 +4,71 @@ App per la gestione dei palmari durante un evento (check-in/check-out, import CS
 
 ---
 
-## Come si avvia (3 passaggi)
+## 🍎 Avvio su Mac
 
-### 1. Scarica il progetto
-In alto in questa pagina clicca il bottone verde **`Code`** → **`Download ZIP`**.
+### La prima volta (unica "seccatura", 2 minuti)
 
-### 2. Scompatta
-Fai doppio click sul file ZIP scaricato. Si creerà una cartella `palmari-manager-active-main`.
+macOS blocca i file `.command` scaricati da internet. Per aggirare il problema in modo pulito si usa un **comando unico nel Terminale** (è il metodo standard, lo stesso che si usa per installare Homebrew).
 
-### 3. Avvia l'app
+1. **Apri il Terminale**
+   - Premi `⌘` + `Spazio` (apre la ricerca Spotlight)
+   - Scrivi `Terminale` e premi Invio
 
-Dentro la cartella trovi due file. Usa quello giusto per il tuo computer:
+2. **Copia la riga qui sotto, incollala nel Terminale e premi Invio**:
 
-| Computer | File da aprire |
-|---|---|
-| 🍎 Mac | **`AVVIA.command`** → leggi prima "Sul Mac la prima volta" qui sotto |
-| 🪟 Windows | **`AVVIA.bat`** → doppio click |
+   ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/drimzlab/palmari-manager-active/main/install.sh)"
+   ```
 
-Si aprirà una finestra nera che prepara tutto da sola e dopo qualche secondo l'app si apre nel browser sull'indirizzo `http://127.0.0.1:5000`.
+3. **Segui le richieste**:
+   - Se chiede la **password del Mac**: scrivila e premi Invio (i caratteri non si vedono mentre digiti, è normale).
+   - Se chiede di premere Invio per confermare: premi Invio.
 
-**Per fermare l'app**: chiudi la finestra nera.
+4. **Aspetta qualche minuto**. Scarica e installa automaticamente Python e tutte le dipendenze. Quando ha finito, l'app si apre da sola nel browser su `http://127.0.0.1:5000`.
 
----
+> Per **fermare l'app**: chiudi la finestra del Terminale (oppure `Ctrl`+`C`).
 
-## ⚠️ Sul Mac la prima volta: NON fare doppio click
+### Le volte successive → doppio click
 
-Se fai doppio click subito ti esce questo errore e non parte niente:
+Dalla seconda volta in poi **non serve più il Terminale**:
 
-> *"AVVIA.command" cannot be opened because it is from an unidentified developer.*
+1. Apri il **Finder**
+2. Vai nella cartella **`palmari-manager-active`** (è dentro la tua cartella utente)
+3. **Doppio click** sul file **`AVVIA.command`**
 
-È normale: macOS blocca i file scaricati da internet. Devi sbloccarlo **una volta sola**, così:
+Funziona senza errori perché è stato creato dall'installer, non scaricato da Safari/Chrome.
 
-1. **Tasto destro** (o `Ctrl`+click) sul file `AVVIA.command`
-2. Nel menu clicca **`Apri`**
-3. Nella finestrella grigia che compare clicca di nuovo **`Apri`**
+### Per aggiornare l'app in futuro
 
-Da quel momento l'app parte e **le volte successive basta il doppio click normale**.
-
-### Se dopo quei 3 click non parte lo stesso (macOS Sonoma/Sequoia)
-
-1. Fai doppio click normale sul file (verrà bloccato, è ok).
-2. Apri **Impostazioni di Sistema → Privacy e Sicurezza**.
-3. Scorri in basso: troverai scritto *"AVVIA.command è stato bloccato…"* con accanto il bottone **`Apri comunque`**. Cliccalo.
-4. Ti chiederà la password del Mac e ti farà vedere ancora una finestrella: clicca **`Apri`**.
+Rilancia lo stesso comando del punto 2 della "prima volta": scarica la versione aggiornata, conserva il database e i backup, riavvia l'app.
 
 ---
 
-## ⚠️ Su Windows la prima volta
+## 🪟 Avvio su Windows
+
+### La prima volta
+
+1. In alto in questa pagina clicca il bottone verde **`Code`** → **`Download ZIP`**.
+2. Doppio click sullo ZIP scaricato per scompattarlo.
+3. Entra nella cartella e **doppio click su `AVVIA.bat`**.
 
 Se compare la schermata blu **"Windows ha protetto il PC"**:
+- Clicca **`Ulteriori informazioni`**
+- Clicca il bottone **`Esegui comunque`**
 
-1. Clicca la scritta **`Ulteriori informazioni`**
-2. Clicca il bottone **`Esegui comunque`** che appare in basso
+Lo script installa Python da solo (tramite `winget`, incluso in Windows 10/11), prepara l'ambiente e avvia l'app. La prima volta può metterci qualche minuto.
+
+### Le volte successive
+
+Doppio click su **`AVVIA.bat`** nella stessa cartella. Basta.
 
 ---
 
-## Prima volta: cosa aspettarsi
+## Cosa aspettarsi la prima volta
 
-- La **prima volta** può metterci qualche minuto: scarica e installa Python da solo.
-- Potrebbe chiederti la **password del computer** o una **conferma**: accetta e vai avanti.
-- **Dalla seconda volta in poi** è istantaneo: doppio click e via.
+- **Scarica e installa Python** se non ce l'hai: richiede qualche minuto e connessione internet.
+- Potrebbe chiedere la **password del computer** o una **conferma**: accetta e vai avanti.
+- **Le volte successive** è quasi immediato.
 
 ---
 
@@ -72,3 +77,4 @@ Se compare la schermata blu **"Windows ha protetto il PC"**:
 - Il database (`palmari.db`) viene creato in automatico al primo avvio e resta nella cartella del progetto.
 - I backup vengono salvati nella cartella `backups/` (ultimi 10).
 - Per importare i palmari usa il CSV di esempio `sample_import.csv` (colonna `codice_dispositivo`, opzionale `esercente`).
+- Su Mac l'installer mette la cartella in `~/palmari-manager-active`.
