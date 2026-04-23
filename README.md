@@ -11,8 +11,8 @@ App locale per la gestione dei palmari durante un evento (check-in/check-out, im
 Apri il **Terminale** e incolla questi comandi uno alla volta:
 
 ```bash
-git clone https://github.com/drimzlab/palmari-meccanismi.git
-cd palmari-meccanismi
+git clone https://github.com/drimzlab/palmari-manager-active.git
+cd palmari-manager-active
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -26,8 +26,8 @@ Poi apri nel browser: **http://127.0.0.1:5000**
 Apri **PowerShell** e incolla:
 
 ```powershell
-git clone https://github.com/drimzlab/palmari-meccanismi.git
-cd palmari-meccanismi
+git clone https://github.com/drimzlab/palmari-manager-active.git
+cd palmari-manager-active
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
