@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palmari Manager - Meccanismi</title>
+    <style>
+        /* === RESET & BASE === */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #0D1B2A;
+            --primary-light: #1B2838;
+            --accent: #00B4D8;
+            --accent-hover: #0096C7;
+            --success: #00C853;
+            --success-bg: #E8F5E9;
+            --success-border: #4CAF50;
+            --error: #FF1744;
+            --error-bg: #FFEBEE;
+            --error-border: #EF5350;
+            --warning: #FF9100;
+            --warning-bg: #FFF3E0;
+            --warning-border: #FF9800;
+            --surface: #FFFFFF;
+            --bg: #F0F2F5;
+            --text: #1A1A2E;
+            --text-secondary: #6B7280;
+            --border: #E5E7EB;
+            --sidebar-w: 240px;
+            --radius: 10px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 14px rgba(0,0,0,0.1);
+        }
+
+        html { font-size: 16px; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* === LAYOUT === */
+        .app { display: flex; height: 100vh; }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            user-select: none;
+        }
+        .sidebar-header {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .sidebar-header h1 {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .sidebar-header .subtitle {
+            font-size: 11px;
+            opacity: 0.5;
+            margin-top: 2px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .nav { flex: 1; padding: 12px 0; }
+        .nav-section { padding: 8px 16px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.35; margin-top: 8px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.06); }
+        .nav-item.active {
+            background: rgba(0,180,216,0.12);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+        .nav-item .icon { font-size: 16px; width: 22px; text-align: center; opacity: 0.8; }
+        .nav-item .kbd {
+            margin-left: auto;
+            font-size: 10px;
+            opacity: 0.3;
+            font-family: monospace;
+        }
+        .nav-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 8px 16px; }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            font-size: 11px;
+            opacity: 0.4;
+        }
+        .sidebar-footer .prefix-display {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        .sidebar-footer .prefix-display strong {
+            color: var(--accent);
+            font-size: 16px;
+        }
+
+        /* === MAIN CONTENT === */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .topbar {
+            padding: 16px 32px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .topbar h2 { font-size: 20px; font-weight: 600; }
+        .topbar .clock { font-size: 14px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 32px;
+        }
+
+        /* === SECTION VISIBILITY === */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* === DASHBOARD === */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border-top: 3px solid var(--border);
+            transition: transform 0.15s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .stat-card.total { border-top-color: var(--accent); }
+        .stat-card.available { border-top-color: var(--success); }
+        .stat-card.assigned { border-top-color: var(--warning); }
+        .stat-card.returned { border-top-color: #7C4DFF; }
+
+        .stat-card .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 6px;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-card.total .stat-value { color: var(--accent); }
+        .stat-card.available .stat-value { color: var(--success); }
+        .stat-card.assigned .stat-value { color: var(--warning); }
+        .stat-card.returned .stat-value { color: #7C4DFF; }
+        .stat-card .stat-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 14px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .panel-body { padding: 0; max-height: 400px; overflow-y: auto; }
+
+        /* === TABLES === */
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            padding: 10px 16px;
+            background: #FAFBFC;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+        }
+        td {
+            padding: 10px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid #F3F4F6;
+        }
+        tr:hover td { background: #F9FAFB; }
+        .empty-row td {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 32px;
+            font-style: italic;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .badge.checkin { background: #DBEAFE; color: #1D4ED8; }
+        .badge.checkout { background: #F3E8FF; color: #7C3AED; }
+        .badge.assegnato { background: var(--warning-bg); color: #E65100; }
+        .badge.disponibile { background: var(--success-bg); color: #2E7D32; }
+
+        .mono {
+            font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+            font-weight: 600;
+        }
+
+        /* === FORMS (CHECK-IN / CHECK-OUT) === */
+        .form-container {
+            max-width: 560px;
+            margin: 0 auto;
+        }
+        .form-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 32px;
+        }
+        .form-row { margin-bottom: 20px; }
+        .form-row label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .form-row input, .form-row select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            font-family: inherit;
+        }
+        .form-row input:focus, .form-row select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,180,216,0.15);
+        }
+        .form-inline { display: flex; gap: 12px; }
+        .form-inline .prefix-field { width: 80px; flex-shrink: 0; }
+        .form-inline .number-field { flex: 1; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            font-family: inherit;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-danger { background: var(--error); color: #fff; }
+        .btn-danger:hover { background: #D50000; }
+        .btn-outline {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover { background: #F9FAFB; }
+        .btn-cmd {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            font-size: 13px;
+            width: auto;
+        }
+        .btn-cmd:hover { background: #F3F4F6; border-color: #D1D5DB; }
+        .btn-cmd .cmd-icon { font-size: 16px; }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text);
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .checkbox-label:hover { background: #F9FAFB; }
+        .checkbox-label input[type="checkbox"] {
+            width: 18px; height: 18px; cursor: pointer;
+            accent-color: var(--accent);
+        }
+        /* === DASHBOARD PANELS: DA RITIRARE / RIENTRATI === */
+        .panel-alert { border: 2px solid var(--warning-border); }
+        .panel-ok { border: 2px solid var(--success-border); margin-top: 20px; }
+
+        .panel-header-warning {
+            background: var(--warning-bg);
+            color: #E65100;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-header-success {
+            background: var(--success-bg);
+            color: #2E7D32;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-header-icon { font-size: 18px; }
+        .panel-header-count {
+            margin-left: auto;
+            background: rgba(0,0,0,0.12);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .panel-alert .panel-body, .panel-ok .panel-body { max-height: 380px; overflow-y: auto; }
+
+        .esercenti-groups {
+            padding: 12px 16px;
+        }
+        .esercente-group {
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .esercente-group:last-child { margin-bottom: 0; }
+        .esercente-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: #FFF8E1;
+            border-bottom: 1px solid #FFE082;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .esercente-group-count {
+            background: var(--warning);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .esercente-group-devices {
+            padding: 8px 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .device-chip {
+            display: inline-block;
+            padding: 3px 10px;
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            border-radius: 6px;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: #E65100;
+        }
+        .device-chip-noassign {
+            background: #FFF3E0;
+            border-color: #FFCC80;
+            color: #BF360C;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Quick Commands Modal */
+        .quick-cmd-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .quick-cmd-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .quick-cmd-btn:hover { border-color: var(--accent); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+        .quick-cmd-btn:active { transform: scale(0.98); }
+        .quick-cmd-icon {
+            font-size: 28px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        .quick-cmd-checkin .quick-cmd-icon { background: #DBEAFE; color: #1D4ED8; }
+        .quick-cmd-checkout .quick-cmd-icon { background: #F3E8FF; color: #7C3AED; }
+        .quick-cmd-info strong { display: block; font-size: 15px; margin-bottom: 2px; }
+        .quick-cmd-info span { font-size: 12px; color: var(--text-secondary); }
+        .hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        /* Check-out input speciale */
+        .checkout-mega-input {
+            font-size: 48px !important;
+            text-align: center;
+            letter-spacing: 6px;
+            font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace !important;
+            font-weight: 700;
+            padding: 24px !important;
+        }
+
+        /* === RESULT FEEDBACK === */
+        .result-box {
+            margin-top: 20px;
+            padding: 18px 24px;
+            border-radius: 8px;
+            font-size: 17px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+            animation: resultPop 0.25s ease-out;
+        }
+        .result-box.show { display: block; }
+        .result-box.success { background: var(--success-bg); color: #1B5E20; border: 2px solid var(--success-border); }
+        .result-box.error { background: var(--error-bg); color: #B71C1C; border: 2px solid var(--error-border); }
+        .result-box.warning { background: var(--warning-bg); color: #E65100; border: 2px solid var(--warning-border); }
+
+        @keyframes resultPop {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Flash feedback per checkout veloce */
+        .flash-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 500;
+            animation: flashFade 0.6s ease-out forwards;
+        }
+        .flash-overlay.success { background: rgba(0,200,83,0.15); }
+        .flash-overlay.error { background: rgba(255,23,68,0.15); }
+
+        @keyframes flashFade {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* === TOAST === */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            box-shadow: var(--shadow-lg);
+            animation: toastIn 0.3s ease-out;
+            max-width: 420px;
+        }
+        .toast.success { background: #2E7D32; }
+        .toast.error { background: #C62828; }
+        .toast.warning { background: #E65100; }
+        .toast.info { background: var(--primary); }
+        .toast.removing { animation: toastOut 0.25s ease-in forwards; }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(60px); }
+        }
+
+        /* === MODAL === */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.15s;
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            width: 480px;
+            max-width: 90vw;
+            animation: modalPop 0.2s ease-out;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-header h3 { font-size: 17px; font-weight: 600; }
+        .modal-close {
+            width: 32px; height: 32px;
+            border: none; background: #F3F4F6;
+            border-radius: 6px; cursor: pointer;
+            font-size: 18px; color: var(--text-secondary);
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
+        }
+        .modal-close:hover { background: #E5E7EB; }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--accent);
+            background: rgba(0,180,216,0.04);
+        }
+        .upload-area .upload-icon { font-size: 32px; margin-bottom: 8px; }
+        .upload-area p { color: var(--text-secondary); font-size: 14px; }
+        .upload-area .file-name {
+            margin-top: 8px;
+            font-weight: 600;
+            color: var(--accent);
+            display: none;
+        }
+        .upload-area input[type="file"] { display: none; }
+        .upload-hint {
+            margin-top: 16px;
+            padding: 12px;
+            background: #F9FAFB;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
+        /* === SETTINGS === */
+        .settings-card {
+            max-width: 480px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+        .settings-card .form-row:last-of-type { margin-bottom: 24px; }
+
+        /* === RECENT LIST IN FORMS === */
+        .recent-ops {
+            margin-top: 28px;
+        }
+        .recent-ops h4 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        .recent-ops .panel { max-height: 280px; }
+
+        /* === AGGIUNGI PALMARI === */
+        .add-devices-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 1000px;
+        }
+        .add-panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .add-panel-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .format-guide {
+            background: #F8FAFC;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 13px;
+        }
+        .format-guide-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .format-guide code {
+            display: block;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        .format-guide-examples {
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            padding-left: 4px;
+            border-left: 2px solid var(--border);
+            padding-left: 10px;
+        }
+        .db-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .db-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #F3F4F6;
+            font-size: 14px;
+        }
+        .db-summary-row:last-child { border-bottom: none; }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 1100px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .add-devices-layout { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; }
+            .sidebar .nav-item span, .sidebar-header .subtitle,
+            .sidebar-footer, .nav-section, .nav-item .kbd { display: none; }
+            .sidebar-header h1 { font-size: 12px; text-align: center; }
+            .content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>PALMARI MANAGER</h1>
+            <div class="subtitle">Meccanismi&reg;</div>
+        </div>
+
+        <nav class="nav">
+            <div class="nav-section">Operazioni</div>
+            <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">
+                <span class="icon">&#9632;</span>
+                <span>Dashboard</span>
+                <span class="kbd">Alt+1</span>
+            </div>
+            <div class="nav-item" data-section="checkin" onclick="showSection('checkin')">
+                <span class="icon">&#8599;</span>
+                <span>Check-In</span>
+                <span class="kbd">Alt+2</span>
+            </div>
+            <div class="nav-item" data-section="checkout" onclick="showSection('checkout')">
+                <span class="icon">&#8601;</span>
+                <span>Check-Out</span>
+                <span class="kbd">Alt+3</span>
+            </div>
+
+            <div class="nav-divider"></div>
+            <div class="nav-section">Gestione</div>
+            <div class="nav-item" onclick="openQuickCommandsModal()">
+                <span class="icon">&#9889;</span>
+                <span>Comandi Rapidi</span>
+            </div>
+            <div class="nav-item" data-section="aggiungi" onclick="showSection('aggiungi')">
+                <span class="icon">&#10010;</span>
+                <span>Aggiungi Palmari</span>
+            </div>
+            <div class="nav-item" onclick="openImportModal()">
+                <span class="icon">&#8613;</span>
+                <span>Import CSV</span>
+            </div>
+            <div class="nav-item" onclick="exportCSV()">
+                <span class="icon">&#8615;</span>
+                <span>Esporta CSV</span>
+            </div>
+            <div class="nav-item" data-section="settings" onclick="showSection('settings')">
+                <span class="icon">&#9881;</span>
+                <span>Impostazioni</span>
+            </div>
+
+            <div class="nav-divider"></div>
+            <div class="nav-item" onclick="openResetModal()">
+                <span class="icon">&#8635;</span>
+                <span>Reset Evento</span>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div>Prefisso attivo:</div>
+            <div class="prefix-display"><strong id="sidebar-prefix">A</strong></div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+        <div class="topbar">
+            <h2 id="section-title">Dashboard</h2>
+            <div class="clock" id="clock"></div>
+        </div>
+
+        <div class="content">
+
+            <!-- ====== DASHBOARD ====== -->
+            <div class="section active" id="sec-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card total">
+                        <div class="stat-value" id="stat-totale">0</div>
+                        <div class="stat-label">Totale Palmari</div>
+                    </div>
+                    <div class="stat-card available">
+                        <div class="stat-value" id="stat-disponibili">0</div>
+                        <div class="stat-label">Disponibili</div>
+                    </div>
+                    <div class="stat-card assigned">
+                        <div class="stat-value" id="stat-assegnati">0</div>
+                        <div class="stat-label">Assegnati</div>
+                    </div>
+                    <div class="stat-card returned">
+                        <div class="stat-value" id="stat-rientrati">0</div>
+                        <div class="stat-label">Rientrati Oggi</div>
+                    </div>
+                </div>
+
+                <!-- PANNELLO PRINCIPALE: Palmari da ritirare -->
+                <div class="panel panel-alert" id="panel-da-ritirare">
+                    <div class="panel-header panel-header-warning">
+                        <span class="panel-header-icon">&#9888;</span>
+                        DA RITIRARE
+                        <span class="panel-header-count" id="count-da-ritirare">0</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="esercenti-groups" id="esercenti-groups">
+                            <div class="empty-state">Nessun palmare fuori</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANNELLO: Rientrati oggi -->
+                <div class="panel panel-ok" id="panel-rientrati">
+                    <div class="panel-header panel-header-success">
+                        <span class="panel-header-icon">&#10003;</span>
+                        RIENTRATI OGGI
+                        <span class="panel-header-count" id="count-rientrati">0</span>
+                    </div>
+                    <div class="panel-body">
+                        <table>
+                            <thead><tr><th>Codice</th><th>Esercente</th><th>Ora Rientro</th></tr></thead>
+                            <tbody id="tbl-rientrati"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Ultimi movimenti (compatto) -->
+                <div class="panel" style="margin-top: 16px;">
+                    <div class="panel-header">Ultimi Movimenti</div>
+                    <div class="panel-body" style="max-height: 220px;">
+                        <table>
+                            <thead><tr><th>Ora</th><th>Tipo</th><th>Codice</th><th>Esercente</th></tr></thead>
+                            <tbody id="tbl-movimenti"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== CHECK-IN ====== -->
+            <div class="section" id="sec-checkin">
+                <div class="form-container">
+                    <div class="form-card">
+                        <form id="form-checkin" onsubmit="doCheckin(event)">
+                            <div class="form-row">
+                                <label>Codice Palmare</label>
+                                <div class="form-inline">
+                                    <div class="prefix-field">
+                                        <input type="text" id="ci-prefix" maxlength="2" value="A"
+                                               style="text-align:center; text-transform:uppercase; font-weight:700;">
+                                    </div>
+                                    <div class="number-field">
+                                        <input type="text" id="ci-numero" placeholder="Numero (es: 431)"
+                                               inputmode="numeric" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="hint">Prefisso + Numero del palmare</div>
+                            </div>
+                            <div class="form-row">
+                                <label>Esercente</label>
+                                <input type="text" id="ci-esercente" placeholder="Nome esercente"
+                                       autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                &#8599; Registra Check-In
+                            </button>
+                        </form>
+                        <div class="result-box" id="ci-result"></div>
+                    </div>
+
+                    <div class="recent-ops">
+                        <h4>Ultimi Check-In</h4>
+                        <div class="panel">
+                            <div class="panel-body">
+                                <table>
+                                    <thead><tr><th>Ora</th><th>Codice</th><th>Esercente</th></tr></thead>
+                                    <tbody id="tbl-recent-ci"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== CHECK-OUT ====== -->
+            <div class="section" id="sec-checkout">
+                <div class="form-container">
+                    <div class="form-card" style="text-align:center;">
+                        <form id="form-checkout" onsubmit="doCheckout(event)">
+                            <div class="form-row">
+                                <label style="font-size:14px;">Numero Palmare</label>
+                                <input type="text" id="co-numero"
+                                       class="checkout-mega-input"
+                                       placeholder="---"
+                                       inputmode="numeric"
+                                       autocomplete="off">
+                                <div class="hint" style="font-size:13px; margin-top:10px;">
+                                    Inserisci il numero e premi <strong>Invio</strong> &mdash; Prefisso: <strong id="co-prefix-label">A</strong>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="font-size:18px; padding:16px;">
+                                &#8601; Registra Check-Out
+                            </button>
+                        </form>
+                        <div class="result-box" id="co-result"></div>
+                    </div>
+
+                    <div class="recent-ops">
+                        <h4>Ultimi Check-Out</h4>
+                        <div class="panel">
+                            <div class="panel-body">
+                                <table>
+                                    <thead><tr><th>Ora</th><th>Codice</th><th>Esercente</th></tr></thead>
+                                    <tbody id="tbl-recent-co"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== AGGIUNGI PALMARI ====== -->
+            <div class="section" id="sec-aggiungi">
+                <div class="add-devices-layout">
+
+                    <!-- Colonna sinistra: Aggiungi da Testo -->
+                    <div class="add-panel">
+                        <div class="form-card">
+                            <h3 class="add-panel-title">&#128221; Inserimento da Testo</h3>
+                            <p class="add-panel-desc">
+                                Incolla una lista di palmari, uno per riga. Ogni riga contiene il codice
+                                dispositivo e, opzionalmente, il nome dell'esercente separato da virgola.
+                            </p>
+                            <div class="format-guide">
+                                <div class="format-guide-title">Formato</div>
+                                <code>PREFISSO-NUMERO, ESERCENTE</code>
+                                <div class="format-guide-examples">
+                                    <div>A-431, Bar Mario</div>
+                                    <div>A-432, Food Truck 7</div>
+                                    <div>A-433</div>
+                                    <div>B-100, Pizzeria Roma</div>
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-top: 16px;">
+                                <label>Lista Palmari</label>
+                                <textarea id="add-text-input" rows="10" placeholder="A-431, Bar Mario&#10;A-432, Food Truck 7&#10;A-433&#10;A-434, Gelateria Luna"
+                                    style="width:100%; padding:12px 16px; font-size:14px; font-family:'SF Mono',Consolas,monospace;
+                                    border:2px solid var(--border); border-radius:8px; outline:none; resize:vertical;
+                                    transition: border-color 0.15s, box-shadow 0.15s; line-height: 1.7;"></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="doAddFromText()" style="margin-top:4px;">
+                                &#10010; Aggiungi Palmari
+                            </button>
+                            <div class="result-box" id="add-text-result"></div>
+                        </div>
+                    </div>
+
+                    <!-- Colonna destra: Aggiungi Singolo -->
+                    <div class="add-panel">
+                        <div class="form-card">
+                            <h3 class="add-panel-title">&#9889; Aggiungi Singolo</h3>
+                            <p class="add-panel-desc">
+                                Aggiungi un singolo palmare al database velocemente.
+                            </p>
+                            <form id="form-add-single" onsubmit="doAddSingle(event)">
+                                <div class="form-row">
+                                    <label>Codice Palmare</label>
+                                    <div class="form-inline">
+                                        <div class="prefix-field">
+                                            <input type="text" id="add-prefix" maxlength="2" value="A"
+                                                   style="text-align:center; text-transform:uppercase; font-weight:700;">
+                                        </div>
+                                        <div class="number-field">
+                                            <input type="text" id="add-numero" placeholder="Numero"
+                                                   inputmode="numeric" autocomplete="off">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <label>Esercente <span style="font-weight:400; text-transform:none; opacity:0.6;">(facoltativo)</span></label>
+                                    <input type="text" id="add-esercente" placeholder="Nome esercente (opzionale)"
+                                           autocomplete="off">
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    &#10010; Aggiungi
+                                </button>
+                            </form>
+                            <div class="result-box" id="add-single-result"></div>
+                        </div>
+
+                        <!-- Riepilogo rapido -->
+                        <div class="form-card" style="margin-top: 16px;">
+                            <h3 class="add-panel-title">&#128202; Database</h3>
+                            <div class="db-summary" id="db-summary">
+                                <div class="db-summary-row">
+                                    <span>Totale palmari</span>
+                                    <strong id="add-db-totale">—</strong>
+                                </div>
+                                <div class="db-summary-row">
+                                    <span>Disponibili</span>
+                                    <strong id="add-db-disponibili" style="color:var(--success);">—</strong>
+                                </div>
+                                <div class="db-summary-row">
+                                    <span>Assegnati</span>
+                                    <strong id="add-db-assegnati" style="color:var(--warning);">—</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ====== IMPOSTAZIONI ====== -->
+            <div class="section" id="sec-settings">
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label>Nome Evento</label>
+                        <input type="text" id="set-evento" placeholder="Nome evento">
+                    </div>
+                    <div class="form-row">
+                        <label>Prefisso Default</label>
+                        <input type="text" id="set-prefisso" maxlength="2"
+                               style="width:80px; text-align:center; text-transform:uppercase; font-weight:700;">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings()" style="width:auto;">
+                        Salva Impostazioni
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- /content -->
+    </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- MODAL IMPORT CSV -->
+<div class="modal-backdrop" id="modal-import">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Import CSV</h3>
+            <button class="modal-close" onclick="closeImportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">&#128194;</div>
+                <p>Clicca per selezionare il file CSV</p>
+                <p class="file-name" id="upload-filename"></p>
+                <input type="file" id="csv-file" accept=".csv">
+            </div>
+            <label class="checkbox-label">
+                <input type="checkbox" id="import-auto-assign">
+                Segna come gia' assegnati i palmari con esercente
+            </label>
+            <div class="upload-hint">
+                Formato richiesto:<br>
+                codice_dispositivo,esercente<br>
+                A-431,Bar Mario<br>
+                A-561,<br><br>
+                <a href="/sample_import.csv" download style="color:var(--accent);">Scarica CSV di esempio</a>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeImportModal()">Annulla</button>
+            <button class="btn btn-primary" style="width:auto;" onclick="doImport()">Importa</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL RESET -->
+<div class="modal-backdrop" id="modal-reset">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Reset Evento</h3>
+            <button class="modal-close" onclick="closeResetModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:15px; margin-bottom:12px;">
+                <strong>Attenzione:</strong> questa operazione:
+            </p>
+            <ul style="margin-left:20px; font-size:14px; color:var(--text-secondary); line-height:2;">
+                <li>Riporta tutti i palmari a DISPONIBILE</li>
+                <li>Cancella tutte le assegnazioni</li>
+                <li>Elimina lo storico movimenti</li>
+                <li>Crea un backup automatico prima del reset</li>
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeResetModal()">Annulla</button>
+            <button class="btn btn-danger" onclick="doReset()">Conferma Reset</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- MODAL COMANDI RAPIDI -->
+<div class="modal-backdrop" id="modal-quick-commands">
+    <div class="modal" style="max-width: 480px;">
+        <div class="modal-header">
+            <h3>&#9889; Comandi Rapidi</h3>
+            <button class="modal-close" onclick="closeQuickCommandsModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 24px;">
+            <div class="quick-cmd-list">
+                <button class="quick-cmd-btn quick-cmd-checkin" onclick="closeQuickCommandsModal(); confirmBulkCheckin();">
+                    <span class="quick-cmd-icon">&#8599;</span>
+                    <div class="quick-cmd-info">
+                        <strong>Check-In Massivo</strong>
+                        <span>Segna tutti i palmari con esercente come ASSEGNATI</span>
+                    </div>
+                </button>
+                <button class="quick-cmd-btn quick-cmd-checkout" onclick="closeQuickCommandsModal(); confirmBulkCheckout();">
+                    <span class="quick-cmd-icon">&#8601;</span>
+                    <div class="quick-cmd-info">
+                        <strong>Check-Out Massivo</strong>
+                        <span>Rientra tutti i palmari assegnati (tutti DISPONIBILI)</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CONFERMA BULK -->
+<div class="modal-backdrop" id="modal-bulk">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="bulk-modal-title">Conferma Operazione</h3>
+            <button class="modal-close" onclick="closeBulkModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="bulk-modal-text" style="font-size:15px;"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeBulkModal()">Annulla</button>
+            <button class="btn btn-primary" style="width:auto;" id="bulk-modal-confirm">Conferma</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ================================================================
+   PALMARI MANAGER - Frontend Logic
+   ================================================================ */
+
+// --- STATO ---
+let currentSection = 'dashboard';
+let appSettings = { prefisso_default: 'A', nome_evento: 'Evento' };
+let dashboardInterval = null;
+
+// --- NAVIGAZIONE ---
+const sectionTitles = {
+    dashboard: 'Dashboard',
+    checkin: 'Check-In (Uscita Palmare)',
+    checkout: 'Check-Out (Rientro Palmare)',
+    aggiungi: 'Aggiungi Palmari',
+    settings: 'Impostazioni'
+};
+
+function showSection(name) {
+    currentSection = name;
+    // Aggiorna sidebar
+    document.querySelectorAll('.nav-item[data-section]').forEach(el => {
+        el.classList.toggle('active', el.dataset.section === name);
+    });
+    // Aggiorna sezioni
+    document.querySelectorAll('.section').forEach(el => {
+        el.classList.toggle('active', el.id === 'sec-' + name);
+    });
+    // Titolo
+    document.getElementById('section-title').textContent = sectionTitles[name] || name;
+
+    // Focus automatico sugli input
+    setTimeout(() => {
+        if (name === 'checkin') {
+            document.getElementById('ci-numero').focus();
+        } else if (name === 'checkout') {
+            document.getElementById('co-numero').focus();
+        } else if (name === 'aggiungi') {
+            document.getElementById('add-numero').focus();
+        }
+    }, 50);
+
+    // Refresh dashboard quando visibile
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'aggiungi') refreshAddSummary();
+}
+
+
+// --- OROLOGIO ---
+function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+
+// --- TOAST ---
+function showToast(message, type) {
+    type = type || 'info';
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+
+// --- FLASH FEEDBACK ---
+function flashScreen(type) {
+    const overlay = document.createElement('div');
+    overlay.className = 'flash-overlay ' + type;
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 700);
+}
+
+
+// --- RESULT BOX ---
+function showResult(elementId, message, type) {
+    const box = document.getElementById(elementId);
+    box.className = 'result-box show ' + type;
+    box.textContent = message;
+    // Auto-nascondi dopo 6 secondi
+    clearTimeout(box._timeout);
+    box._timeout = setTimeout(() => {
+        box.classList.remove('show');
+    }, 6000);
+}
+
+
+// --- DASHBOARD ---
+async function loadDashboard() {
+    try {
+        const res = await fetch('/api/dashboard');
+        const data = await res.json();
+
+        document.getElementById('stat-totale').textContent = data.totale;
+        document.getElementById('stat-disponibili').textContent = data.disponibili;
+        document.getElementById('stat-assegnati').textContent = data.assegnati;
+        document.getElementById('stat-rientrati').textContent = data.rientrati_oggi;
+
+        // --- PANNELLO DA RITIRARE ---
+        document.getElementById('count-da-ritirare').textContent = data.assegnati;
+        const groupsEl = document.getElementById('esercenti-groups');
+
+        if (data.palmari_fuori.length === 0) {
+            groupsEl.innerHTML = '<div class="empty-state">Tutti i palmari sono rientrati &#10003;</div>';
+            document.getElementById('panel-da-ritirare').style.borderColor = 'var(--success-border)';
+        } else {
+            document.getElementById('panel-da-ritirare').style.borderColor = '';
+            // Raggruppa per esercente
+            const groups = {};
+            data.palmari_fuori.forEach(p => {
+                const key = p.esercente || 'Senza esercente';
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(p);
+            });
+
+            let html = '';
+            Object.keys(groups).sort().forEach(esercente => {
+                const devices = groups[esercente];
+                html += '<div class="esercente-group">';
+                html += '<div class="esercente-group-header">';
+                html += '<span>' + esc(esercente) + '</span>';
+                html += '<span class="esercente-group-count">' + devices.length + '</span>';
+                html += '</div>';
+                html += '<div class="esercente-group-devices">';
+                devices.forEach(d => {
+                    const cls = esercente === 'Senza esercente' ? 'device-chip device-chip-noassign' : 'device-chip';
+                    html += '<span class="' + cls + '">' + esc(d.codice) + '</span>';
+                });
+                html += '</div></div>';
+            });
+            groupsEl.innerHTML = html;
+        }
+
+        // --- PANNELLO RIENTRATI OGGI ---
+        document.getElementById('count-rientrati').textContent = data.rientrati_oggi;
+        const tbRientrati = document.getElementById('tbl-rientrati');
+        if (data.palmari_rientrati.length === 0) {
+            tbRientrati.innerHTML = '<tr class="empty-row"><td colspan="3">Nessun rientro oggi</td></tr>';
+        } else {
+            tbRientrati.innerHTML = data.palmari_rientrati.map(p => {
+                const ora = p.timestamp ? p.timestamp.split(' ')[1] || p.timestamp : '';
+                return '<tr>' +
+                    '<td class="mono">' + esc(p.codice) + '</td>' +
+                    '<td>' + esc(p.esercente) + '</td>' +
+                    '<td>' + esc(ora) + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        // --- ULTIMI MOVIMENTI ---
+        const tbMov = document.getElementById('tbl-movimenti');
+        if (data.ultimi_movimenti.length === 0) {
+            tbMov.innerHTML = '<tr class="empty-row"><td colspan="4">Nessun movimento</td></tr>';
+        } else {
+            tbMov.innerHTML = data.ultimi_movimenti.map(m => {
+                const ora = m.timestamp ? m.timestamp.split(' ')[1] || m.timestamp : '';
+                const badgeClass = m.operazione === 'CHECKIN' ? 'checkin' : 'checkout';
+                const badgeLabel = m.operazione === 'CHECKIN' ? 'IN &#8599;' : 'OUT &#8601;';
+                return '<tr>' +
+                    '<td>' + esc(ora) + '</td>' +
+                    '<td><span class="badge ' + badgeClass + '">' + badgeLabel + '</span></td>' +
+                    '<td class="mono">' + esc(m.codice) + '</td>' +
+                    '<td>' + esc(m.esercente) + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+    } catch (e) {
+        console.error('Errore caricamento dashboard:', e);
+    }
+}
+
+// --- QUICK COMMANDS MODAL ---
+function openQuickCommandsModal() {
+    document.getElementById('modal-quick-commands').classList.add('show');
+}
+function closeQuickCommandsModal() {
+    document.getElementById('modal-quick-commands').classList.remove('show');
+}
+
+
+// --- AGGIUNGI PALMARI ---
+async function doAddFromText() {
+    const testo = document.getElementById('add-text-input').value.trim();
+    if (!testo) {
+        showResult('add-text-result', 'Inserisci almeno un palmare', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/add-devices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ testo })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            let msg = data.messaggio;
+            showResult('add-text-result', msg, 'success');
+            showToast('Palmari aggiunti: ' + msg, 'success');
+            flashScreen('success');
+            document.getElementById('add-text-input').value = '';
+            refreshAddSummary();
+            // Mostra dettagli errori se presenti
+            if (data.righe_errore && data.righe_errore.length > 0) {
+                setTimeout(() => {
+                    showResult('add-text-result',
+                        msg + '\n\nErrori:\n' + data.righe_errore.join('\n'), 'warning');
+                }, 100);
+            }
+        } else {
+            showResult('add-text-result', data.errore, 'error');
+            showToast(data.errore, 'error');
+        }
+    } catch (e) {
+        showResult('add-text-result', 'Errore di connessione', 'error');
+    }
+}
+
+async function doAddSingle(event) {
+    event.preventDefault();
+    const prefisso = document.getElementById('add-prefix').value.trim().toUpperCase() || appSettings.prefisso_default;
+    const numero = document.getElementById('add-numero').value.trim();
+    const esercente = document.getElementById('add-esercente').value.trim();
+
+    if (!numero) {
+        showResult('add-single-result', 'Inserisci il numero del palmare', 'error');
+        document.getElementById('add-numero').focus();
+        return;
+    }
+
+    const riga = esercente ? `${prefisso}-${numero}, ${esercente}` : `${prefisso}-${numero}`;
+
+    try {
+        const res = await fetch('/api/add-devices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ testo: riga })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            const codice = `${prefisso}-${numero}`;
+            if (data.inseriti > 0) {
+                showResult('add-single-result', `${codice} aggiunto al database`, 'success');
+                showToast(`Palmare ${codice} aggiunto`, 'success');
+                flashScreen('success');
+            } else if (data.aggiornati > 0) {
+                showResult('add-single-result', `${codice} gia' presente — aggiornato`, 'warning');
+                showToast(`Palmare ${codice} aggiornato`, 'warning');
+            } else {
+                showResult('add-single-result', data.righe_errore?.[0] || 'Errore formato', 'error');
+            }
+            document.getElementById('add-numero').value = '';
+            document.getElementById('add-esercente').value = '';
+            document.getElementById('add-numero').focus();
+            refreshAddSummary();
+        } else {
+            showResult('add-single-result', data.errore, 'error');
+        }
+    } catch (e) {
+        showResult('add-single-result', 'Errore di connessione', 'error');
+    }
+}
+
+async function refreshAddSummary() {
+    try {
+        const res = await fetch('/api/dashboard');
+        const data = await res.json();
+        document.getElementById('add-db-totale').textContent = data.totale;
+        document.getElementById('add-db-disponibili').textContent = data.disponibili;
+        document.getElementById('add-db-assegnati').textContent = data.assegnati;
+    } catch (e) {}
+}
+
+
+// --- CHECK-IN ---
+async function doCheckin(event) {
+    event.preventDefault();
+    const prefisso = document.getElementById('ci-prefix').value.trim().toUpperCase() || appSettings.prefisso_default;
+    const numero = document.getElementById('ci-numero').value.trim();
+    const esercente = document.getElementById('ci-esercente').value.trim();
+
+    if (!numero) {
+        showResult('ci-result', 'Inserisci il numero del palmare', 'error');
+        document.getElementById('ci-numero').focus();
+        return;
+    }
+    if (!esercente) {
+        showResult('ci-result', 'Inserisci il nome dell\'esercente', 'error');
+        document.getElementById('ci-esercente').focus();
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prefisso, numero, esercente })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            showResult('ci-result', data.messaggio, 'success');
+            flashScreen('success');
+            showToast(data.messaggio, 'success');
+            document.getElementById('ci-numero').value = '';
+            document.getElementById('ci-esercente').value = '';
+            document.getElementById('ci-numero').focus();
+            loadRecentCheckins();
+        } else if (data.warning) {
+            showResult('ci-result', data.errore, 'warning');
+            showToast(data.errore, 'warning');
+        } else {
+            showResult('ci-result', data.errore, 'error');
+            showToast(data.errore, 'error');
+        }
+    } catch (e) {
+        showResult('ci-result', 'Errore di connessione', 'error');
+    }
+}
+
+
+async function loadRecentCheckins() {
+    try {
+        const res = await fetch('/api/logs?limit=10');
+        const logs = await res.json();
+        const checkins = logs.filter(l => l.operazione === 'CHECKIN').slice(0, 8);
+        const tbody = document.getElementById('tbl-recent-ci');
+        if (checkins.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="3">Nessun check-in</td></tr>';
+        } else {
+            tbody.innerHTML = checkins.map(l => {
+                const ora = l.timestamp ? l.timestamp.split(' ')[1] || '' : '';
+                return '<tr><td>' + esc(ora) + '</td><td class="mono">' + esc(l.codice) + '</td><td>' + esc(l.esercente) + '</td></tr>';
+            }).join('');
+        }
+    } catch (e) {}
+}
+
+
+// --- CHECK-OUT ---
+async function doCheckout(event) {
+    event.preventDefault();
+    const numero = document.getElementById('co-numero').value.trim();
+    const prefisso = appSettings.prefisso_default;
+
+    if (!numero) {
+        showResult('co-result', 'Inserisci il numero del palmare', 'error');
+        document.getElementById('co-numero').focus();
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prefisso, numero })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            showResult('co-result', data.messaggio, 'success');
+            flashScreen('success');
+            showToast(data.messaggio, 'success');
+            document.getElementById('co-numero').value = '';
+            document.getElementById('co-numero').focus();
+            loadRecentCheckouts();
+        } else if (data.warning) {
+            showResult('co-result', data.errore, 'warning');
+            showToast(data.errore, 'warning');
+            document.getElementById('co-numero').value = '';
+            document.getElementById('co-numero').focus();
+        } else {
+            showResult('co-result', data.errore, 'error');
+            showToast(data.errore, 'error');
+            document.getElementById('co-numero').value = '';
+            document.getElementById('co-numero').focus();
+        }
+    } catch (e) {
+        showResult('co-result', 'Errore di connessione', 'error');
+    }
+}
+
+
+async function loadRecentCheckouts() {
+    try {
+        const res = await fetch('/api/logs?limit=10');
+        const logs = await res.json();
+        const checkouts = logs.filter(l => l.operazione === 'CHECKOUT').slice(0, 8);
+        const tbody = document.getElementById('tbl-recent-co');
+        if (checkouts.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="3">Nessun check-out</td></tr>';
+        } else {
+            tbody.innerHTML = checkouts.map(l => {
+                const ora = l.timestamp ? l.timestamp.split(' ')[1] || '' : '';
+                return '<tr><td>' + esc(ora) + '</td><td class="mono">' + esc(l.codice) + '</td><td>' + esc(l.esercente) + '</td></tr>';
+            }).join('');
+        }
+    } catch (e) {}
+}
+
+
+// --- IMPORT CSV ---
+function openImportModal() {
+    document.getElementById('modal-import').classList.add('show');
+    document.getElementById('csv-file').value = '';
+    document.getElementById('upload-filename').style.display = 'none';
+}
+
+function closeImportModal() {
+    document.getElementById('modal-import').classList.remove('show');
+}
+
+// Upload area click e drag
+(function() {
+    const area = document.getElementById('upload-area');
+    const input = document.getElementById('csv-file');
+    const fname = document.getElementById('upload-filename');
+
+    area.addEventListener('click', () => input.click());
+
+    area.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        area.classList.add('dragover');
+    });
+    area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+    area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        area.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            fname.textContent = e.dataTransfer.files[0].name;
+            fname.style.display = 'block';
+        }
+    });
+    input.addEventListener('change', () => {
+        if (input.files.length) {
+            fname.textContent = input.files[0].name;
+            fname.style.display = 'block';
+        }
+    });
+})();
+
+
+async function doImport() {
+    const input = document.getElementById('csv-file');
+    if (!input.files.length) {
+        showToast('Seleziona un file CSV', 'warning');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', input.files[0]);
+    const autoAssign = document.getElementById('import-auto-assign').checked;
+    formData.append('auto_assign', autoAssign ? 'true' : 'false');
+
+    try {
+        const res = await fetch('/api/import', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            showToast(data.messaggio, 'success');
+            closeImportModal();
+            loadDashboard();
+        } else {
+            showToast(data.errore, 'error');
+        }
+    } catch (e) {
+        showToast('Errore durante l\'import', 'error');
+    }
+}
+
+
+// --- EXPORT CSV ---
+function exportCSV() {
+    window.location.href = '/api/export';
+    showToast('Download CSV avviato', 'info');
+}
+
+
+// --- RESET ---
+function openResetModal() {
+    document.getElementById('modal-reset').classList.add('show');
+}
+
+function closeResetModal() {
+    document.getElementById('modal-reset').classList.remove('show');
+}
+
+async function doReset() {
+    try {
+        const res = await fetch('/api/reset', { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+            showToast(data.messaggio, 'success');
+            closeResetModal();
+            loadDashboard();
+        } else {
+            showToast(data.errore || 'Errore durante il reset', 'error');
+        }
+    } catch (e) {
+        showToast('Errore di connessione', 'error');
+    }
+}
+
+
+// --- BULK OPERATIONS ---
+function closeBulkModal() {
+    document.getElementById('modal-bulk').classList.remove('show');
+    // Ripristina visibilita' bottone conferma (nascosto in check-in massivo)
+    document.getElementById('bulk-modal-confirm').style.display = '';
+}
+
+function confirmBulkCheckin() {
+    document.getElementById('bulk-modal-title').textContent = 'Check-In Massivo';
+    document.getElementById('bulk-modal-text').innerHTML =
+        '<strong>Scegli la modalita\u0300 di check-in massivo:</strong><br><br>' +
+        '<div style="display:flex;flex-direction:column;gap:12px;">' +
+            '<button class="btn btn-primary" style="width:100%;padding:14px 20px;font-size:15px;" ' +
+                'onclick="doBulkCheckin(\'con_esercente\')">' +
+                '\uD83D\uDC65 Solo palmari con esercente' +
+                '<div style="font-size:12px;opacity:.8;margin-top:2px;">Segna come ASSEGNATO solo i palmari che hanno un esercente associato</div>' +
+            '</button>' +
+            '<button class="btn" style="width:100%;padding:14px 20px;font-size:15px;background:var(--warning);color:#fff;" ' +
+                'onclick="doBulkCheckin(\'tutti\')">' +
+                '\uD83D\uDCE6 Tutti i palmari disponibili' +
+                '<div style="font-size:12px;opacity:.8;margin-top:2px;">Segna come ASSEGNATO tutti i palmari, anche quelli senza esercente</div>' +
+            '</button>' +
+        '</div>';
+    // Nascondi il bottone conferma standard (usiamo i due bottoni nel testo)
+    document.getElementById('bulk-modal-confirm').style.display = 'none';
+    document.getElementById('modal-bulk').classList.add('show');
+}
+
+function confirmBulkCheckout() {
+    document.getElementById('bulk-modal-title').textContent = 'Check-Out Massivo';
+    document.getElementById('bulk-modal-text').innerHTML =
+        'Tutti i palmari attualmente <strong>ASSEGNATI</strong> verranno riportati a ' +
+        '<strong>DISPONIBILE</strong> (rientro massivo).<br><br>' +
+        'Vuoi procedere?';
+    const btn = document.getElementById('bulk-modal-confirm');
+    btn.style.display = '';
+    btn.textContent = 'Conferma Check-Out Massivo';
+    btn.className = 'btn btn-danger';
+    btn.style.width = 'auto';
+    btn.onclick = doBulkCheckout;
+    document.getElementById('modal-bulk').classList.add('show');
+}
+
+async function doBulkCheckin(mode) {
+    closeBulkModal();
+    try {
+        const res = await fetch('/api/bulk-checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: mode || 'con_esercente' })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            showToast(data.messaggio, 'success');
+            flashScreen('success');
+            loadDashboard();
+        } else {
+            showToast(data.errore, 'warning');
+        }
+    } catch (e) {
+        showToast('Errore di connessione', 'error');
+    }
+}
+
+async function doBulkCheckout() {
+    closeBulkModal();
+    try {
+        const res = await fetch('/api/bulk-checkout', { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+            showToast(data.messaggio, 'success');
+            flashScreen('success');
+            loadDashboard();
+        } else {
+            showToast(data.errore, 'warning');
+        }
+    } catch (e) {
+        showToast('Errore di connessione', 'error');
+    }
+}
+
+
+// --- SETTINGS ---
+async function loadSettings() {
+    try {
+        const res = await fetch('/api/settings');
+        appSettings = await res.json();
+
+        document.getElementById('set-evento').value = appSettings.nome_evento || '';
+        document.getElementById('set-prefisso').value = appSettings.prefisso_default || 'A';
+        document.getElementById('ci-prefix').value = appSettings.prefisso_default || 'A';
+        document.getElementById('sidebar-prefix').textContent = appSettings.prefisso_default || 'A';
+        document.getElementById('co-prefix-label').textContent = appSettings.prefisso_default || 'A';
+    } catch (e) {
+        console.error('Errore caricamento settings:', e);
+    }
+}
+
+async function saveSettings() {
+    const nome_evento = document.getElementById('set-evento').value.trim();
+    const prefisso = document.getElementById('set-prefisso').value.trim().toUpperCase() || 'A';
+
+    try {
+        const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nome_evento: nome_evento,
+                prefisso_default: prefisso
+            })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            showToast('Impostazioni salvate', 'success');
+            loadSettings();
+        }
+    } catch (e) {
+        showToast('Errore salvataggio', 'error');
+    }
+}
+
+
+// --- KEYBOARD SHORTCUTS ---
+document.addEventListener('keydown', (e) => {
+    // Alt+1/2/3 per navigazione rapida
+    if (e.altKey && e.key === '1') { e.preventDefault(); showSection('dashboard'); }
+    if (e.altKey && e.key === '2') { e.preventDefault(); showSection('checkin'); }
+    if (e.altKey && e.key === '3') { e.preventDefault(); showSection('checkout'); }
+
+    // Escape chiude i modal
+    if (e.key === 'Escape') {
+        closeImportModal();
+        closeResetModal();
+        closeQuickCommandsModal();
+        closeBulkModal();
+    }
+});
+
+
+// --- UTILITY ---
+function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function formatTime(ts) {
+    if (!ts) return '';
+    const parts = ts.split(' ');
+    return parts.length > 1 ? parts[1] : ts;
+}
+
+
+// --- INIT ---
+loadSettings();
+loadDashboard();
+loadRecentCheckins();
+loadRecentCheckouts();
+
+// Auto-refresh dashboard ogni 10 secondi
+setInterval(() => {
+    if (currentSection === 'dashboard') loadDashboard();
+}, 10000);
+
+</script>
+</body>
+</html>

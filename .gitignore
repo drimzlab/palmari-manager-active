@@ -1,0 +1,24 @@
+# Database SQLite (creato al primo avvio)
+*.db
+*.db-shm
+*.db-wal
+
+# Backup locali
+backups/
+
+# Ambiente virtuale Python
+venv/
+.venv/
+env/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Strumenti locali / editor
+.claude/
+.playwright-mcp/
+.vscode/
+.idea/
+.DS_Store
